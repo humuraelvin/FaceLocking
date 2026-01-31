@@ -1,0 +1,41 @@
+================================================================================
+Face Locking Session History
+================================================================================
+Face Name: HUMURA
+Session Start: 2026-01-31 21:38:36.410
+File: humura_history_1769888316410.txt
+================================================================================
+Format: [HH:MM:SS.mmm] ACTION_TYPE | description | confidence | value
+================================================================================
+
+[00:00:00.002] STATUS                | Target face selected: Humura
+[00:00:02.293] STATUS                | Lock ACQUIRED for Humura (confidence=0.686)
+[00:00:02.827] SMILE           | Smile/laugh detected (mouth height ratio: 2.53)    | conf=0.90 | val=2.5296
+[00:00:03.091] SMILE           | Smile/laugh detected (mouth height ratio: 1.54)    | conf=0.90 | val=1.5371
+[00:00:03.349] SMILE           | Smile/laugh detected (mouth height ratio: 1.26)    | conf=0.90 | val=1.2558
+[00:00:03.630] SMILE           | Smile/laugh detected (mouth height ratio: 1.09)    | conf=0.63 | val=1.0947
+[00:00:06.014] SMILE           | Smile/laugh detected (mouth height ratio: 1.28)    | conf=0.90 | val=1.2820
+[00:00:06.264] SMILE           | Smile/laugh detected (mouth height ratio: 1.15)    | conf=0.90 | val=1.1463
+[00:00:09.982] STATUS                | Lock RE-ACQUIRED for Humura
+[00:00:10.329] STATUS                | Lock RE-ACQUIRED for Humura
+[00:00:11.655] STATUS                | Lock RE-ACQUIRED for Humura
+[00:00:17.207] STATUS                | Lock RE-ACQUIRED for Humura
+[00:00:17.489] MOVE_RIGHT      | Head movement right (41.2px)                       | conf=0.95 | val=41.2409
+[00:00:43.872] STATUS                | Lock RE-ACQUIRED for Humura
+[00:00:44.136] SMILE           | Smile/laugh detected (mouth height ratio: 1.86)    | conf=0.90 | val=1.8633
+[00:00:44.136] MOVE_LEFT       | Head movement left (58.3px)                        | conf=0.95 | val=58.3375
+[00:00:44.136] FACE_CLOSER     | Face moved closer to camera (scale ratio: 1.14)    | conf=0.85 | val=1.1408
+[00:00:52.195] SMILE           | Smile/laugh detected (mouth height ratio: 1.10)    | conf=0.67 | val=1.1002
+[00:00:53.040] SMILE           | Smile/laugh detected (mouth height ratio: 1.19)    | conf=0.90 | val=1.1927
+[00:00:53.040] MOVE_LEFT       | Head movement left (17.3px)                        | conf=0.86 | val=17.2964
+[00:00:53.638] STATUS                | Lock RE-ACQUIRED for Humura
+[00:00:55.780] MOVE_RIGHT      | Head movement right (10.8px)                       | conf=0.54 | val=10.8214
+[00:00:56.053] MOVE_RIGHT      | Head movement right (10.4px)                       | conf=0.52 | val=10.4492
+[00:00:58.267] SMILE           | Smile/laugh detected (mouth height ratio: 1.12)    | conf=0.82 | val=1.1223
+[00:00:58.526] SMILE           | Smile/laugh detected (mouth height ratio: 1.10)    | conf=0.69 | val=1.1031
+[00:00:59.600] SMILE           | Smile/laugh detected (mouth height ratio: 1.10)    | conf=0.64 | val=1.0965
+
+================================================================================
+Session ended at 2026-01-31 21:39:38.141
+Total actions recorded: 18
+================================================================================

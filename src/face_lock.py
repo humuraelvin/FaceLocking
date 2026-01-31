@@ -100,7 +100,10 @@ class FaceLockSystem:
         db_path: Path = Path("data/db/face_db.npz"),
         enroll_dir: Path = Path("data/enroll"),
         model_path: Path = Path("models/embedder_arcface.onnx"),
-        distance_threshold: float = 0.62,
+        distance_threshold: float = 0.54,
+        lock_timeout_frames: int = 30,
+        min_lock_confidence: float = 0.65,
+    ):
         """
         Args:
             db_path: path to face database NPZ
@@ -166,7 +169,8 @@ class FaceLockSystem:
             return None, 1.0, 0.0
 
         # Get embedding
-        emb = self.embedder.embed(aligned_face)
+        emb_result = self.embedder.embed(aligned_face)
+        emb = emb_result.embedding  # Extract numpy array from EmbeddingResult
 
         # Find best match
         best_name = None
@@ -359,9 +363,12 @@ def main():
     if not cap.isOpened():
         raise RuntimeError("Camera not available")
 
-        system = FaceLockSystem(
-            enroll_dir=Path("data/enroll"),
-            distance_threshold=0.62,    # Get available faces
+    system = FaceLockSystem(
+        enroll_dir=Path("data/enroll"),
+        distance_threshold=0.54,
+    )
+    
+    # Get available faces
     if not system.db_names:
         print("No enrolled faces found. Run enrollment first.")
         cap.release()
