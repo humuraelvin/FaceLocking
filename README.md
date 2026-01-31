@@ -1,26 +1,33 @@
-# Face Recognition with ArcFace ONNX and 5-Point Alignment
+# Face Recognition & Locking with ArcFace ONNX and 5-Point Alignment
 
-A **research-grade, CPU-first face recognition system** implementing ArcFace embeddings with 5-point facial landmark alignment. Built for clarity, stability, and practical deployment on laptops without GPU acceleration.
+A **research-grade, CPU-first face recognition system** with **advanced face locking and behavior tracking**. Implements ArcFace embeddings with 5-point facial landmark alignment, real-time action detection, and persistent behavior logging.
+
+Built for clarity, stability, and practical deployment on laptops without GPU acceleration.
 
 **Based on:** *Face Recognition with ArcFace ONNX and 5-Point Alignment* by Gabriel Baziramwabo (Rwanda Coding Academy)
+
+**Extended with:** Face Locking, Action Detection, and Behavior History Tracking
 
 ---
 
 ## 📋 Table of Contents
 
 1. [Features](#features)
-2. [System Requirements](#system-requirements)
-3. [Installation](#installation)
-4. [Project Structure](#project-structure)
-5. [Quick Start](#quick-start)
-6. [Detailed Usage Guide](#detailed-usage-guide)
-7. [Pipeline Architecture](#pipeline-architecture)
-8. [Troubleshooting](#troubleshooting)
+2. [What's New: Face Locking](#whats-new-face-locking)
+3. [System Requirements](#system-requirements)
+4. [Installation](#installation)
+5. [Project Structure](#project-structure)
+6. [Quick Start](#quick-start)
+7. [Detailed Usage Guide](#detailed-usage-guide)
+8. [Face Locking Guide](#face-locking-guide)
+9. [Pipeline Architecture](#pipeline-architecture)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## ✨ Features
 
+### Face Recognition Core
 - ✅ **CPU-Only Inference**: Runs efficiently on laptops without GPU
 - ✅ **5-Point Alignment**: Haar cascade detection + MediaPipe landmark extraction
 - ✅ **ArcFace ONNX Model**: 512-dimensional L2-normalized embeddings
@@ -29,6 +36,50 @@ A **research-grade, CPU-first face recognition system** implementing ArcFace emb
 - ✅ **Threshold Evaluation**: Data-driven FAR/FRR analysis
 - ✅ **Open-Set Recognition**: Rejects unknown faces automatically
 - ✅ **Database Persistence**: JSON metadata + NPZ embeddings
+
+### Face Locking (NEW)
+- ✅ **Identity-Specific Tracking**: Lock onto a single enrolled identity
+- ✅ **Stable Tracking**: Follow face across frames with timeout protection
+- ✅ **Action Detection**: Real-time blink, movement, and expression detection
+- ✅ **Behavior History**: Persistent logging of all detected actions to timestamped files
+- ✅ **State Machine**: SEARCHING → LOCKED → LOST with automatic recovery
+- ✅ **Configurable Sensitivity**: Adjust detection thresholds per use case
+
+---
+
+## 🔒 What's New: Face Locking
+
+Face Locking is a major extension that transforms the system from **recognition** to **tracking & behavior analysis**.
+
+### Core Capability
+When an enrolled identity appears, the system:
+1. **Recognizes who they are**
+2. **Locks onto their face**
+3. **Tracks movements** in real-time
+4. **Detects actions** (blinks, head movement, smiles)
+5. **Records everything** to a timestamped history file
+
+### Use Cases
+- **Security**: Track suspects/intruders with action timeline
+- **HCI Research**: Monitor user attention and engagement
+- **Interview Analysis**: Record behavioral cues
+- **Accessibility**: Head tracking for disabled users
+- **Entertainment**: Real-time reaction detection
+
+### Detected Actions
+- **Eye Blinks**: Rapid eye closure/opening
+- **Head Movement**: Left/right motion tracking
+- **Smiles/Laughs**: Mouth height increase
+- **Face Distance**: Moving closer/farther from camera
+
+### Output Example
+```
+[00:00:05.234] BLINK       | Eye blink detected | conf=0.85 | val=0.45
+[00:00:06.567] MOVE_RIGHT  | Head movement right (12.5px) | conf=0.92 | val=12.5
+[00:00:07.890] SMILE       | Smile detected (ratio: 1.15) | conf=0.88 | val=1.15
+```
+
+**👉 See [FACE_LOCKING_GUIDE.md](FACE_LOCKING_GUIDE.md) for detailed documentation**
 
 ---
 
@@ -115,32 +166,42 @@ rm -f buffalo_l.zip w600k_r50.onnx 1k3d68.onnx 2d106det.onnx det_10g.onnx gender
 ## 📁 Project Structure
 
 ```
-Face-Recog-onnx/
+Face-Locking/
 ├── src/
-│   ├── camera.py           # Camera capture validation
-│   ├── detect.py           # Haar face detection testing
-│   ├── landmarks.py        # MediaPipe 5-point landmark extraction
-│   ├── align.py            # Face alignment to 112×112
-│   ├── embed.py            # ArcFace ONNX embedding extraction
-│   ├── enroll.py           # Enrollment tool (build database)
-│   ├── evaluate.py         # Threshold evaluation (FAR/FRR analysis)
-│   ├── recognize.py        # Real-time recognition pipeline
-│   └── haar_5pt.py         # Reusable Haar + 5pt detector class
+│   ├── camera.py                # Camera capture validation
+│   ├── detect.py                # Haar face detection testing
+│   ├── landmarks.py             # MediaPipe 5-point landmark extraction
+│   ├── align.py                 # Face alignment to 112×112
+│   ├── embed.py                 # ArcFace ONNX embedding extraction
+│   ├── enroll.py                # Enrollment tool (build database)
+│   ├── evaluate.py              # Threshold evaluation (FAR/FRR analysis)
+│   ├── recognize.py             # Real-time recognition pipeline
+│   ├── haar_5pt.py              # Reusable Haar + 5pt detector class
+│   ├── face_lock.py             # ⭐ Main face locking system
+│   ├── action_detector.py       # ⭐ Action detection (blink, smile, movement)
+│   └── face_history_logger.py   # ⭐ Behavior history logging
 ├── data/
-│   ├── enroll/             # Aligned 112×112 enrollment crops (per person)
+│   ├── enroll/                  # Aligned 112×112 enrollment crops (per person)
 │   │   ├── Person1/
 │   │   ├── Person2/
 │   │   └── ...
-│   └── db/                 # Recognition database
-│       ├── face_db.npz     # Embeddings (name → vector)
-│       └── face_db.json    # Metadata
+│   ├── db/                      # Recognition database
+│   │   ├── face_db.npz          # Embeddings (name → vector)
+│   │   └── face_db.json         # Metadata
+│   └── face_histories/          # ⭐ Action history logs (auto-created)
+│       ├── person1_history_*.txt
+│       ├── person2_history_*.txt
+│       └── ...
 ├── models/
-│   └── embedder_arcface.onnx   # ArcFace model (w600k_r50)
-├── book/                   # Reference materials
-├── requirements.txt        # Python dependencies
-├── README.md              # This file
-└── init_project.py        # Project initialization script
+│   └── embedder_arcface.onnx    # ArcFace model (w600k_r50)
+├── book/                        # Reference materials
+├── FACE_LOCKING_GUIDE.md        # ⭐ Comprehensive face locking documentation
+├── requirements.txt             # Python dependencies
+├── README.md                    # This file
+└── init_project.py              # Project initialization script
 ```
+
+**⭐ = New files for Face Locking feature**
 
 ---
 
@@ -176,6 +237,27 @@ python -m src.evaluate
 
 # 8. Start live recognition
 python -m src.recognize
+```
+
+### 🔒 Face Locking (NEW)
+
+```bash
+# 9. Start face locking with action detection
+python -m src.face_lock
+
+# When prompted:
+# 1. Select an enrolled face (e.g., "Gabi")
+# 2. System searches for that face
+# 3. When found → lock acquired
+# 4. Watch as actions are detected and logged
+# 5. Press 'r' to release, 'q' to quit
+# 6. History automatically saved to data/face_histories/
+```
+
+**Check History:**
+```bash
+ls -lh data/face_histories/
+cat data/face_histories/gabi_history_*.txt
 ```
 
 ---
@@ -215,9 +297,7 @@ python -m src.detect
 - Box follows face movement
 - Press **q** to exit
 
----
-
-### 3️⃣ 5-Point Landmarks
+---### 3️⃣ 5-Point Landmarks
 
 **Purpose:** Verify facial landmark extraction
 
@@ -378,6 +458,59 @@ python -m src.recognize
 
 ---
 
+### 9️⃣ Face Locking & Action Detection (NEW)
+
+**Purpose:** Lock onto an enrolled identity and track behavior in real-time
+
+```bash
+python -m src.face_lock
+```
+
+**Workflow:**
+1. System shows available enrolled faces
+2. You select target identity (e.g., "Gabi")
+3. System enters **SEARCHING** state
+4. When target appears with high confidence → **LOCKED**
+5. While locked, system detects and logs actions:
+   - Eye blinks
+   - Head movement (left/right)
+   - Smiles/laughs
+   - Face distance changes (closer/farther)
+6. Actions logged to timestamped history file in `data/face_histories/`
+7. If face disappears briefly, lock held in **LOST** state
+8. Lock released if face absent too long, or press **r**
+
+**Controls:**
+- **r** → Release lock manually
+- **q** → Quit and save history
+
+**Example Output:**
+```
+Lock: LOCKED | Target: Gabi
+Conf: 0.92 | Time: 15.3s
+Actions: blink | move_right | smile
+```
+
+**History File Example:**
+```
+[00:00:05.234] BLINK       | Eye blink detected | conf=0.85 | val=0.45
+[00:00:06.567] MOVE_RIGHT  | Head movement right (12.5px) | conf=0.92 | val=12.5
+[00:00:07.890] SMILE       | Smile detected (ratio: 1.15) | conf=0.88 | val=1.15
+```
+
+**Check History:**
+```bash
+# List all history files
+ls -lh data/face_histories/
+
+# View latest session
+cat data/face_histories/gabi_history_*.txt
+```
+
+**👉 For detailed Face Locking documentation, see [FACE_LOCKING_GUIDE.md](FACE_LOCKING_GUIDE.md)**
+
+---
+
 ## 🏗️ Pipeline Architecture
 
 ### Enrollment Pipeline
@@ -420,6 +553,22 @@ Cosine Distance to DB Templates
 Threshold Decision
     ↓
 Accept/Reject + Display Label
+```
+
+### Face Locking Pipeline (NEW)
+
+```
+Camera Frame
+    ↓
+Detection & Recognition (as above)
+    ↓
+State Machine (SEARCHING → LOCKED → LOST)
+    ↓
+Action Detection (blink, movement, smile)
+    ↓
+History Logging
+    ↓
+Persistent File Storage
 ```
 
 ### Key Concepts
