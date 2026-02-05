@@ -360,24 +360,15 @@ def _put_text(img, text: str, xy=(10, 30), scale=0.8, thickness=2):
 
 def main():
     """Interactive face locking demo."""
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        raise RuntimeError("Camera not available")
-
+    # Load system WITHOUT opening camera yet
     system = FaceLockSystem(
         enroll_dir=Path("data/enroll"),
         distance_threshold=0.54,
     )
     
-    # Create large display manager
-    display = CameraDisplay(mode=CameraDisplay.LARGE)
-    display.create_window("Face Locking", resizable=True)
-    
     # Get available faces
     if not system.db_names:
         print("No enrolled faces found. Run enrollment first.")
-        cap.release()
-        display.close_all()
         return
 
     print("\n" + "=" * 80)
@@ -385,16 +376,24 @@ def main():
     print("=" * 80)
     print(f"\nAvailable faces: {', '.join(system.db_names)}\n")
 
-    # User selects target
+    # User selects target BEFORE opening camera
     while True:
         target = input("Select face to lock (or 'q' to quit): ").strip()
         if target.lower() == "q":
-            cap.release()
             return
         if system.select_target(target):
             print(f"✓ Target selected: {target}")
             break
         print(f"✗ Face '{target}' not found. Try again.")
+
+    # NOW open camera after selection
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        raise RuntimeError("Camera not available")
+    
+    # Create large display manager
+    display = CameraDisplay(mode=CameraDisplay.LARGE)
+    display.create_window("Face Locking", resizable=True)
 
     print("\nStarting face locking...")
     print("Controls:")
