@@ -31,6 +31,7 @@ import cv2
 import numpy as np
 from .haar_5pt import Haar5ptDetector, align_face_5pt
 from .embed import ArcFaceEmbedderONNX
+from .camera_display import CameraDisplay
 
 
 # -------------------------
@@ -200,12 +201,14 @@ def main():
     auto = False
     last_auto = 0.0
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     if not cap.isOpened():
         raise RuntimeError("Failed to open camera.")
 
-    cv2.namedWindow(cfg.window_main, cv2.WINDOW_NORMAL)
-    cv2.namedWindow(cfg.window_aligned, cv2.WINDOW_NORMAL)
+    # Create large resizable windows
+    display = CameraDisplay(mode=CameraDisplay.LARGE)
+    display.create_window(cfg.window_main, resizable=True)
+    display.create_window(cfg.window_aligned, resizable=False)
     cv2.resizeWindow(cfg.window_aligned, 240, 240)
 
     print("\nEnrollment started.")

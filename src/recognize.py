@@ -35,6 +35,7 @@ except Exception as e:
     _MP_IMPORT_ERROR = e
 
 from .haar_5pt import align_face_5pt
+from .camera_display import CameraDisplay
 
 
 # -------------------------
@@ -374,19 +375,25 @@ def main():
     )
     db = load_db_npz(db_path)
     matcher = FaceDBMatcher(db=db, dist_thresh=0.62)
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     if not cap.isOpened():
         raise RuntimeError("Camera not available")
+    
+    # Create large display
+    display = CameraDisplay(mode=CameraDisplay.LARGE)
+    display.create_window("recognize_new", resizable=True)
+    
     print("Recognize (multi-face). q=quit, r=reload DB, +/- threshold, d=debug overlay")
     t0 = time.time()
     frames = 0
     fps: Optional[float] = None
     show_debug = False
 
-    while True:
-        ok, frame = cap.read()
-        if not ok:
-            break
+    try:
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
         faces = det.detect(frame, max_faces=5)
         vis = frame.copy()
         frames += 1
@@ -486,8 +493,9 @@ def main():
             show_debug = not show_debug
             print(f"[recognize] debug overlay: {'ON' if show_debug else 'OFF'}")
 
-    cap.release()
-    cv2.destroyAllWindows()
+    finally:
+        cap.release()
+        display.close_all()
 
 
 if __name__ == "__main__":

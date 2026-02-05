@@ -25,6 +25,8 @@ except Exception as e:
     mp = None
     _MP_IMPORT_ERROR = e
 
+from .camera_display import CameraDisplay
+
 
 # -------------------------
 # Data
@@ -326,7 +328,7 @@ class Haar5ptDetector:
 # Demo
 # -------------------------
 def main():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
 
     det = Haar5ptDetector(
         min_size=(70, 70),
@@ -334,19 +336,24 @@ def main():
         debug=True,
     )
 
+    # Create large display
+    display = CameraDisplay(mode=CameraDisplay.LARGE)
+    display.create_window("haar_5pt", resizable=True)
+
     print("Haar + 5pt (FaceMesh) test. Press q to quit.")
 
-    while True:
-        ok, frame = cap.read()
-        if not ok:
-            break
+    try:
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
 
-        faces = det.detect(frame, max_faces=1)
-        vis = frame.copy()
+            faces = det.detect(frame, max_faces=1)
+            vis = frame.copy()
 
-        if faces:
-            f = faces[0]
-            cv2.rectangle(vis, (f.x1, f.y1), (f.x2, f.y2), (0, 255, 0), 2)
+            if faces:
+                f = faces[0]
+                cv2.rectangle(vis, (f.x1, f.y1), (f.x2, f.y2), (0, 255, 0), 2)
 
             for x, y in f.kps.astype(int):
                 cv2.circle(vis, (int(x), int(y)), 3, (0, 255, 0), -1)
@@ -375,6 +382,10 @@ def main():
 
         if (cv2.waitKey(1) & 0xFF) == ord("q"):
             break
+
+    finally:
+        cap.release()
+        display.close_all()
 
     cap.release()
     cv2.destroyAllWindows()

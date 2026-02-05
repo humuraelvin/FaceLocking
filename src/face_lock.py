@@ -27,6 +27,7 @@ from .haar_5pt import Haar5ptDetector, align_face_5pt
 from .embed import ArcFaceEmbedderONNX
 from .action_detector import ActionDetector, Action
 from .face_history_logger import FaceHistoryLogger
+from .camera_display import CameraDisplay
 
 
 # =====================================================================
@@ -359,7 +360,7 @@ def _put_text(img, text: str, xy=(10, 30), scale=0.8, thickness=2):
 
 def main():
     """Interactive face locking demo."""
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     if not cap.isOpened():
         raise RuntimeError("Camera not available")
 
@@ -368,10 +369,15 @@ def main():
         distance_threshold=0.54,
     )
     
+    # Create large display manager
+    display = CameraDisplay(mode=CameraDisplay.LARGE)
+    display.create_window("Face Locking", resizable=True)
+    
     # Get available faces
     if not system.db_names:
         print("No enrolled faces found. Run enrollment first.")
         cap.release()
+        display.close_all()
         return
 
     print("\n" + "=" * 80)

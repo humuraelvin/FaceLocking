@@ -21,6 +21,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 from .haar_5pt import Haar5ptDetector, align_face_5pt
+from .camera_display import CameraDisplay
 
 
 # -------------------------
@@ -149,7 +150,7 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
 # Demo
 # -------------------------
 def main():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     det = Haar5ptDetector(
         min_size=(70, 70),
         smooth_alpha=0.80,
@@ -159,13 +160,19 @@ def main():
         model_path="models/embedder_arcface.onnx",
         debug=False,
     )
+    
+    # Create large display
+    display = CameraDisplay(mode=CameraDisplay.LARGE)
+    display.create_window("Face Embedding", resizable=True)
+    
     prev_emb: Optional[np.ndarray] = None
     print("Embedding Demo running. Press 'q' to quit, 'p' to print embedding.")
     t0 = time.time()
     frames = 0
     fps = 0.0
 
-    while True:
+    try:
+        while True:
         ok, frame = cap.read()
         if not ok:
             break
@@ -245,8 +252,9 @@ def main():
             print(" min/max:", prev_emb.min(), prev_emb.max())
             print(" first10:", prev_emb[:10])
 
-    cap.release()
-    cv2.destroyAllWindows()
+    finally:
+        cap.release()
+        display.close_all()
 
 
 if __name__ == "__main__":
