@@ -360,7 +360,7 @@ def _put_text(img, text: str, xy=(10, 30), scale=0.8, thickness=2):
 
 def main():
     """Interactive face locking demo."""
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise RuntimeError("Camera not available")
 

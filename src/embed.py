@@ -150,7 +150,7 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
 # Demo
 # -------------------------
 def main():
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(0)
     det = Haar5ptDetector(
         min_size=(70, 70),
         smooth_alpha=0.80,
@@ -173,84 +173,84 @@ def main():
 
     try:
         while True:
-        ok, frame = cap.read()
-        if not ok:
-            break
-        vis = frame.copy()
-        faces = det.detect(frame, max_faces=1)
-        info = []
+            ok, frame = cap.read()
+            if not ok:
+                break
+            vis = frame.copy()
+            faces = det.detect(frame, max_faces=1)
+            info = []
 
-        if faces:
-            f = faces[0]
-            cv2.rectangle(vis, (f.x1, f.y1), (f.x2, f.y2), (0, 255, 0), 2)
-            for x, y in f.kps.astype(int):
-                cv2.circle(vis, (x, y), 3, (0, 255, 0), -1)
+            if faces:
+                f = faces[0]
+                cv2.rectangle(vis, (f.x1, f.y1), (f.x2, f.y2), (0, 255, 0), 2)
+                for x, y in f.kps.astype(int):
+                    cv2.circle(vis, (x, y), 3, (0, 255, 0), -1)
 
-            aligned, _ = align_face_5pt(frame, f.kps, out_size=(112, 112))
-            res = emb_model.embed(aligned)
-            info.append(f"embedding dim: {res.dim}")
-            info.append(f"norm(before L2): {res.norm_before:.2f}")
+                aligned, _ = align_face_5pt(frame, f.kps, out_size=(112, 112))
+                res = emb_model.embed(aligned)
+                info.append(f"embedding dim: {res.dim}")
+                info.append(f"norm(before L2): {res.norm_before:.2f}")
 
-            if prev_emb is not None:
-                sim = cosine_similarity(prev_emb, res.embedding)
-                info.append(f"cos(prev,this): {sim:.3f}")
-            prev_emb = res.embedding
+                if prev_emb is not None:
+                    sim = cosine_similarity(prev_emb, res.embedding)
+                    info.append(f"cos(prev,this): {sim:.3f}")
+                prev_emb = res.embedding
 
-            aligned_small = cv2.resize(aligned, (160, 160))
-            h, w = vis.shape[:2]
-            vis[10:170, w - 170 : w - 10] = aligned_small
+                aligned_small = cv2.resize(aligned, (160, 160))
+                h, w = vis.shape[:2]
+                vis[10:170, w - 170 : w - 10] = aligned_small
 
-            draw_text_block(vis, info, origin=(10, 30))
-            HEAT_X, HEAT_Y = 10, 220
-            CELL_SCALE = 6
+                draw_text_block(vis, info, origin=(10, 30))
+                HEAT_X, HEAT_Y = 10, 220
+                CELL_SCALE = 6
 
-            ww, hh = draw_embedding_matrix(
+                ww, hh = draw_embedding_matrix(
+                    vis,
+                    res.embedding,
+                    top_left=(HEAT_X, HEAT_Y),
+                    cell_scale=CELL_SCALE,
+                    title="embedding heatmap",
+                )
+
+                if ww > 0:
+                    cv2.putText(
+                        vis,
+                        emb_preview_str(res.embedding),
+                        (HEAT_X, HEAT_Y + hh + 28),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.55,
+                        (200, 200, 200),
+                        2,
+                    )
+            else:
+                draw_text_block(vis, ["no face"], origin=(10, 30), color=(0, 0, 255))
+
+            frames += 1
+            dt = time.time() - t0
+            if dt >= 1.0:
+                fps = frames / dt
+                frames = 0
+                t0 = time.time()
+
+            cv2.putText(
                 vis,
-                res.embedding,
-                top_left=(HEAT_X, HEAT_Y),
-                cell_scale=CELL_SCALE,
-                title="embedding heatmap",
+                f"fps: {fps:.1f}",
+                (10, vis.shape[0] - 15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 255, 0),
+                2,
             )
 
-            if ww > 0:
-                cv2.putText(
-                    vis,
-                    emb_preview_str(res.embedding),
-                    (HEAT_X, HEAT_Y + hh + 28),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.55,
-                    (200, 200, 200),
-                    2,
-                )
-        else:
-            draw_text_block(vis, ["no face"], origin=(10, 30), color=(0, 0, 255))
-
-        frames += 1
-        dt = time.time() - t0
-        if dt >= 1.0:
-            fps = frames / dt
-            frames = 0
-            t0 = time.time()
-
-        cv2.putText(
-            vis,
-            f"fps: {fps:.1f}",
-            (10, vis.shape[0] - 15),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (0, 255, 0),
-            2,
-        )
-
-        cv2.imshow("Face Embedding", vis)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            break
-        elif key == ord("p") and prev_emb is not None:
-            print("[embedding]")
-            print(" dim:", prev_emb.size)
-            print(" min/max:", prev_emb.min(), prev_emb.max())
-            print(" first10:", prev_emb[:10])
+            cv2.imshow("Face Embedding", vis)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
+                break
+            elif key == ord("p") and prev_emb is not None:
+                print("[embedding]")
+                print(" dim:", prev_emb.size)
+                print(" min/max:", prev_emb.min(), prev_emb.max())
+                print(" first10:", prev_emb[:10])
 
     finally:
         cap.release()

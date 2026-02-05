@@ -375,7 +375,7 @@ def main():
     )
     db = load_db_npz(db_path)
     matcher = FaceDBMatcher(db=db, dist_thresh=0.62)
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         raise RuntimeError("Camera not available")
     
@@ -394,104 +394,105 @@ def main():
             ok, frame = cap.read()
             if not ok:
                 break
-        faces = det.detect(frame, max_faces=5)
-        vis = frame.copy()
-        frames += 1
-        dt = time.time() - t0
-        if dt >= 1.0:
-            fps = frames / dt
-            frames = 0
-            t0 = time.time()
+            
+            faces = det.detect(frame, max_faces=5)
+            vis = frame.copy()
+            frames += 1
+            dt = time.time() - t0
+            if dt >= 1.0:
+                fps = frames / dt
+                frames = 0
+                t0 = time.time()
 
-        h, w = vis.shape[:2]
-        thumb = 112
-        pad = 8
-        x0 = w - thumb - pad
-        y0 = 80
-        shown = 0
+            h, w = vis.shape[:2]
+            thumb = 112
+            pad = 8
+            x0 = w - thumb - pad
+            y0 = 80
+            shown = 0
 
-        for i, f in enumerate(faces):
-            cv2.rectangle(vis, (f.x1, f.y1), (f.x2, f.y2), (0, 255, 0), 2)
-            for x, y in f.kps.astype(int):
-                cv2.circle(vis, (int(x), int(y)), 2, (0, 255, 0), -1)
-            aligned, _ = align_face_5pt(frame, f.kps, out_size=(112, 112))
-            emb = embedder.embed(aligned)
-            mr = matcher.match(emb)
-            label = mr.name if mr.name is not None else "Unknown"
-            line1 = f"{label}"
-            line2 = f"dist={mr.distance:.3f} sim={mr.similarity:.3f}"
-            color = (0, 255, 0) if mr.accepted else (0, 0, 255)
-            cv2.putText(
-                vis,
-                line1,
-                (f.x1, max(0, f.y1 - 28)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                color,
-                2,
-            )
-            cv2.putText(
-                vis,
-                line2,
-                (f.x1, max(0, f.y1 - 6)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                color,
-                2,
-            )
-            if y0 + thumb <= h and shown < 4:
-                vis[y0 : y0 + thumb, x0 : x0 + thumb] = aligned
+            for i, f in enumerate(faces):
+                cv2.rectangle(vis, (f.x1, f.y1), (f.x2, f.y2), (0, 255, 0), 2)
+                for x, y in f.kps.astype(int):
+                    cv2.circle(vis, (int(x), int(y)), 2, (0, 255, 0), -1)
+                aligned, _ = align_face_5pt(frame, f.kps, out_size=(112, 112))
+                emb = embedder.embed(aligned)
+                mr = matcher.match(emb)
+                label = mr.name if mr.name is not None else "Unknown"
+                line1 = f"{label}"
+                line2 = f"dist={mr.distance:.3f} sim={mr.similarity:.3f}"
+                color = (0, 255, 0) if mr.accepted else (0, 0, 255)
                 cv2.putText(
                     vis,
-                    f"{i+1}:{label}",
-                    (x0, y0 - 6),
+                    line1,
+                    (f.x1, max(0, f.y1 - 28)),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.55,
+                    0.8,
                     color,
                     2,
                 )
-                y0 += thumb + pad
-                shown += 1
+                cv2.putText(
+                    vis,
+                    line2,
+                    (f.x1, max(0, f.y1 - 6)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    color,
+                    2,
+                )
+                if y0 + thumb <= h and shown < 4:
+                    vis[y0 : y0 + thumb, x0 : x0 + thumb] = aligned
+                    cv2.putText(
+                        vis,
+                        f"{i+1}:{label}",
+                        (x0, y0 - 6),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.55,
+                        color,
+                        2,
+                    )
+                    y0 += thumb + pad
+                    shown += 1
 
-        if show_debug:
-            dbg = f"kpsLeye=({f.kps[0,0]:.0f},{f.kps[0,1]:.0f})"
+            if show_debug:
+                dbg = f"kpsLeye=({f.kps[0,0]:.0f},{f.kps[0,1]:.0f})"
+                cv2.putText(
+                    vis,
+                    dbg,
+                    (10, h - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (255, 255, 255),
+                    2,
+                )
+
+            header = f"IDs={len(matcher._names)} thr(dist)={matcher.dist_thresh:.2f}"
+            if fps is not None:
+                header += f" fps={fps:.1f}"
             cv2.putText(
-                vis,
-                dbg,
-                (10, h - 20),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (255, 255, 255),
-                2,
+                vis, header, (10, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2
             )
 
-        header = f"IDs={len(matcher._names)} thr(dist)={matcher.dist_thresh:.2f}"
-        if fps is not None:
-            header += f" fps={fps:.1f}"
-        cv2.putText(
-            vis, header, (10, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2
-        )
-
-        cv2.imshow("recognize_new", vis)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            break
-        elif key == ord("r"):
-            matcher.reload_from(db_path)
-            print(f"[recognize] reloaded DB: {len(matcher._names)} identities")
-        elif key in (ord("+"), ord("=")):
-            matcher.dist_thresh = float(min(1.20, matcher.dist_thresh + 0.01))
-            print(
-                f"[recognize] thr(dist)={matcher.dist_thresh:.2f} (sim~{1.0-matcher.dist_thresh:.2f})"
-            )
-        elif key == ord("-"):
-            matcher.dist_thresh = float(max(0.05, matcher.dist_thresh - 0.01))
-            print(
-                f"[recognize] thr(dist)={matcher.dist_thresh:.2f} (sim~{1.0-matcher.dist_thresh:.2f})"
-            )
-        elif key == ord("d"):
-            show_debug = not show_debug
-            print(f"[recognize] debug overlay: {'ON' if show_debug else 'OFF'}")
+            cv2.imshow("recognize_new", vis)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
+                break
+            elif key == ord("r"):
+                matcher.reload_from(db_path)
+                print(f"[recognize] reloaded DB: {len(matcher._names)} identities")
+            elif key in (ord("+"), ord("=")):
+                matcher.dist_thresh = float(min(1.20, matcher.dist_thresh + 0.01))
+                print(
+                    f"[recognize] thr(dist)={matcher.dist_thresh:.2f} (sim~{1.0-matcher.dist_thresh:.2f})"
+                )
+            elif key == ord("-"):
+                matcher.dist_thresh = float(max(0.05, matcher.dist_thresh - 0.01))
+                print(
+                    f"[recognize] thr(dist)={matcher.dist_thresh:.2f} (sim~{1.0-matcher.dist_thresh:.2f})"
+                )
+            elif key == ord("d"):
+                show_debug = not show_debug
+                print(f"[recognize] debug overlay: {'ON' if show_debug else 'OFF'}")
 
     finally:
         cap.release()

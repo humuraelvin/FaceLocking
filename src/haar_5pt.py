@@ -328,7 +328,7 @@ class Haar5ptDetector:
 # Demo
 # -------------------------
 def main():
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(0)
 
     det = Haar5ptDetector(
         min_size=(70, 70),
@@ -354,41 +354,36 @@ def main():
             if faces:
                 f = faces[0]
                 cv2.rectangle(vis, (f.x1, f.y1), (f.x2, f.y2), (0, 255, 0), 2)
+                for x, y in f.kps.astype(int):
+                    cv2.circle(vis, (int(x), int(y)), 3, (0, 255, 0), -1)
+                cv2.putText(
+                    vis,
+                    "OK",
+                    (f.x1, max(0, f.y1 - 8)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
+                )
+            else:
+                cv2.putText(
+                    vis,
+                    "no face",
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.9,
+                    (0, 0, 255),
+                    2,
+                )
 
-            for x, y in f.kps.astype(int):
-                cv2.circle(vis, (int(x), int(y)), 3, (0, 255, 0), -1)
+            cv2.imshow("haar_5pt", vis)
 
-            cv2.putText(
-                vis,
-                "OK",
-                (f.x1, max(0, f.y1 - 8)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2,
-            )
-        else:
-            cv2.putText(
-                vis,
-                "no face",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.9,
-                (0, 0, 255),
-                2,
-            )
-
-        cv2.imshow("haar_5pt", vis)
-
-        if (cv2.waitKey(1) & 0xFF) == ord("q"):
-            break
+            if (cv2.waitKey(1) & 0xFF) == ord("q"):
+                break
 
     finally:
         cap.release()
         display.close_all()
-
-    cap.release()
-    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
